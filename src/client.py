@@ -45,16 +45,20 @@ def discover_client():
     discover_address = ('<broadcast>', 57000)
     discover_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     discover_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    discover_socket.settimeout(1)
     data = "-*-*-Computer-Information*Report-*-*-".encode('utf-8')
-    discover_socket.sendto(data, discover_address)
-
-    print(f'[{timestamp()}] Server discovering')
 
     while True:
-        discover_data, discover_address = discover_socket.recvfrom(1024)
-        if discover_data.decode('utf-8') == "*-*-*Computer*Information-Report*-*-*":
-            print(f'[{timestamp()}] Server discovered: {discover_address[0]}')
-            return (discover_address[0], 57000)
+        try:
+            print(f'[{timestamp()}] Server discovering')
+            discover_socket.sendto(data, discover_address)
+            discover_data, discover_address = discover_socket.recvfrom(1024)
+
+            if discover_data.decode('utf-8') == "*-*-*Computer*Information-Report*-*-*":
+                print(f'[{timestamp()}] Server discovered: {discover_address[0]}')
+                return (discover_address[0], 57000)
+        except socket.timeout:
+            pass
 
 def report_client(server_address):
     message = get_computer_info()
@@ -63,14 +67,18 @@ def report_client(server_address):
     sock_obj.connect(server_address)
     sock_obj.sendall(message)
     data = sock_obj.recv(1024)
+    sock_obj.close()
     if data == message:
         print(f'[{timestamp()}] Computer Report Success!')
+        return True
     else:
         print(f'[{timestamp()}] Computer Report Error! Data not match.')
+        return False
 
-    sock_obj.close()
-
-if __name__ == '__main__':
+def report_info():
     server_address = discover_client()
 
-    report_client(server_address)
+    return report_client(server_address)
+
+if __name__ == '__main__':
+    report_info()
