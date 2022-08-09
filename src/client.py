@@ -9,8 +9,10 @@ def get_computer_info():
 
     computer = c.Win32_ComputerSystem()[0]
     brand = computer.Manufacturer
-    model = computer.SystemFamily
-    serial = computer.Model
+    model = computer.Model
+
+    bios = c.Win32_BIOS()[0]
+    serial = bios.SerialNumber
 
     processor = c.Win32_Processor()[0]
     cpu_name = processor.Name
